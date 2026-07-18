@@ -1,16 +1,40 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: n8n_postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=n8n
+      - POSTGRES_PASSWORD=P@ssw0rdAr123
+      - POSTGRES_DB=n8n
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U n8n -d n8n"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   n8n:
     image: n8nio/n8n:latest
     container_name: n8n
     restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
-      - WEBHOOK_URL=${WEBHOOK_URL}
-      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
-      - TZ=${TZ}
-      - DB_TYPE=${DB_TYPE}
-      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
-      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=${N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS}
+      - WEBHOOK_URL=https://n8n.clavisdev.cloud/
+      - GENERIC_TIMEZONE=Asia/Jakarta
+      - TZ=Asia/Jakarta
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=n8n
+      - DB_POSTGRESDB_PASSWORD=P@ssw0rdAr123
+      - DB_TYPE=postgresdb
+      - N8N_ENCRYPTION_KEY=aa9c89f07c70e53b2b1db524fb4deb683bc96083ae411205
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
     ports:
-      - "127.0.0.1:5678:5678"
+      - "0.0.0.0:5678:5678"
     volumes:
       - ./n8n_data:/home/node/.n8n
